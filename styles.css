@@ -1,0 +1,34 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: black;
+    color: white;
+    font-family: Arial, sans-serif;
+    font-size: 2em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-align: center;
+}
+
+.container {
+    max-width: 80%;
+}
+
+hr {
+    border: 1px solid white;
+    margin: 20px 0;
+}
+
+.qr-section {
+    bottom: 0;
+    width: 100%;
+    background-color: black;
+    padding: 10px 0;
+    text-align: center; /* Center contents inside the QR section */
+}
+
+#qrcode {
+    display: inline-block; /* Ensures the generated QR code is treated as inline element */
+}
