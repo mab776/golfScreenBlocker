@@ -37,6 +37,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional, Tuple
 from googleapiclient.discovery import build, Resource
 from googleapiclient.errors import HttpError
+from typings_google_calendar_api.events import Event
 from config import Config, load_config
 
 
@@ -53,12 +54,12 @@ except Exception as e:
     sys.exit(1)
 
 
-def getCalendarService() -> Resource:
+def getCalendarService() -> Any:
     """Try to build and return the Google Calendar API service.
     Retries every 30 seconds if connection fails."""
     while True:
         try:
-            serviceInstance: Resource = build("calendar", "v3", developerKey=cfg.apiKey)
+            serviceInstance = build("calendar", "v3", developerKey=cfg.apiKey)
             print("Google Calendar service initialized successfully.")
             return serviceInstance
         except Exception as e:
@@ -68,7 +69,7 @@ def getCalendarService() -> Resource:
 
 
 # Google Calendar API setup using API key authentication
-calendarService: Resource = getCalendarService()
+calendarService: Any = getCalendarService()
 
 # Chrome kiosk mode command
 kioskCommand: list[str] = [
@@ -86,26 +87,26 @@ kioskCommand: list[str] = [
 ]
 
 
-def get_events() -> Tuple[Optional[dict], Optional[dict], Optional[dict]]:
+def getEvents() -> Tuple[Optional[Event], Optional[Event], Optional[Event]]:
     """
-    Returns a tuple: (current_event, last_event, next_event) by checking only a narrow time window:
+    Returns a tuple: (currentEvent, lastEvent, nextEvent) by checking only a narrow time window:
     from 5 minutes ago to 5 minutes in the future.
-    - current_event: an event active now (startTime <= now < endTime).
-    - next_event: the next event (first event with startTime > now).
-    - last_event: the most recent event that ended (endTime <= now).
+    - currentEvent: an event active now (startTime <= now < endTime).
+    - nextEvent: the next event (first event with startTime > now).
+    - lastEvent: the most recent event that ended (endTime <= now).
     """
     now = datetime.now(timezone.utc)
-    time_min = now - timedelta(minutes=5)
-    time_max = now + timedelta(minutes=5)
+    timeMin = now - timedelta(minutes=5)
+    timeMax = now + timedelta(minutes=5)
 
     try:
-        eventsResult: dict[str, Any] = calendarService.events().list(
+        events: list[Event] = calendarService.events().list(
             calendarId=cfg.calendarId,
-            timeMin=time_min.isoformat(),
-            timeMax=time_max.isoformat(),
+            timeMin=timeMin.isoformat(),
+            timeMax=timeMax.isoformat(),
             singleEvents=True,
             orderBy="startTime"
-        ).execute()
+        ).execute().get("items", [])
     except HttpError as he:
         print("HTTP error during Calendar API call:", he)
         return None, None, None
@@ -113,10 +114,9 @@ def get_events() -> Tuple[Optional[dict], Optional[dict], Optional[dict]]:
         print("Error fetching events:", e)
         return None, None, None
 
-    events: list[Any] = eventsResult.get("items", [])
-    current_event = None
-    next_event = None
-    last_event = None
+    currentEvent = None
+    nextEvent = None
+    lastEvent = None
 
     for event in events:
         startStr: str = event["start"].get("dateTime", event["start"].get("date"))
@@ -124,16 +124,16 @@ def get_events() -> Tuple[Optional[dict], Optional[dict], Optional[dict]]:
         startTime: datetime = datetime.fromisoformat(startStr)
         endTime: datetime = datetime.fromisoformat(endStr)
         if startTime <= now < endTime:
-            current_event = event
-        elif startTime > now and next_event is None:
-            next_event = event
+            currentEvent = event
+        elif startTime > now and nextEvent is None:
+            nextEvent = event
         elif endTime <= now:
             # Pick the event that ended most recently
-            if (last_event is None or
-                    datetime.fromisoformat(last_event["end"].get("dateTime", last_event["end"].get("date"))) < endTime):
-                last_event = event
+            if (lastEvent is None or
+                    datetime.fromisoformat(lastEvent["end"].get("dateTime", lastEvent["end"].get("date"))) < endTime):
+                lastEvent = event
 
-    return current_event, last_event, next_event
+    return currentEvent, lastEvent, nextEvent
 
 
 def killChrome() -> None:
@@ -147,7 +147,7 @@ def killChrome() -> None:
         print("Error killing Chrome processes:", e)
 
 
-def startChrome(msgtype: MessageType = MessageType.TIMEUP) -> None:
+def startChrome(msgType: MessageType = MessageType.TIMEUP) -> None:
     """
     Start Chrome in kiosk mode, passing the message type as a query parameter.
     MessageType.TIMEUP indicates the long-duration message.
@@ -162,7 +162,7 @@ def startChrome(msgtype: MessageType = MessageType.TIMEUP) -> None:
         print("Error checking Chrome processes:", e)
 
     print("Starting Chrome in kiosk mode.")
-    url = cfg.htmlFile + "?msg=" + msgtype.value
+    url = cfg.htmlFile + "?msg=" + msgType.value
     try:
         subprocess.Popen(kioskCommand + [url])
     except Exception as e:
@@ -174,40 +174,39 @@ def main() -> None:
     while True:
         try:
             now = datetime.now(timezone.utc)
-            current_event, last_event, next_event = get_events()
+            currentEvent, lastEvent, nextEvent = getEvents()
 
-            if current_event is not None:
+            if currentEvent is not None:
                 killChrome()
             else:
                 if boot:
-                    startChrome(msgtype=MessageType.TIMEUP)
+                    startChrome(msgType=MessageType.TIMEUP)
                     boot = False
                 else:
                     # If a future event is within 5 minutes, disable the blocker.
-                    if next_event is not None:
-                        next_start = datetime.fromisoformat(
-                            next_event["start"].get("dateTime", next_event["start"].get("date"))
+                    if nextEvent is not None:
+                        nextStart = datetime.fromisoformat(
+                            nextEvent["start"].get("dateTime", nextEvent["start"].get("date"))
                         )
-                        seconds_to_next = (next_start - now).total_seconds()
-                        if seconds_to_next <= 5 * 60:
+                        secondsToNext = (nextStart - now).total_seconds()
+                        if secondsToNext <= 5 * 60:
                             killChrome()
                             time.sleep(5 * 60)
                             continue  # Skip starting Chrome if a booking is imminent.
 
                     # Determine the appropriate message.
-                    msgtype = MessageType.TIMEUP
-                    if last_event is not None and next_event is not None:
-                        last_end = datetime.fromisoformat(
-                            last_event["end"].get("dateTime", last_event["end"].get("date"))
+                    msgType = MessageType.TIMEUP
+                    if lastEvent is not None and nextEvent is not None:
+                        lastEnd = datetime.fromisoformat(
+                            lastEvent["end"].get("dateTime", lastEvent["end"].get("date"))
                         )
-                        next_start = datetime.fromisoformat(
-                            next_event["start"].get("dateTime", next_event["start"].get("date"))
+                        nextStart = datetime.fromisoformat(
+                            nextEvent["start"].get("dateTime", nextEvent["start"].get("date"))
                         )
                         # Back-to-back if the next event starts exactly when the last one ended.
-                        if (next_start - last_end).total_seconds() == 0:
-                            msgtype = MessageType.BACK_TO_BACK
-                    startChrome(msgtype)
-
+                        if (nextStart - lastEnd).total_seconds() == 0:
+                            msgType = MessageType.BACK_TO_BACK
+                    startChrome(msgType)
         except Exception as e:
             print("Error in main loop:", e)
         finally:
