@@ -18,7 +18,6 @@ CALENDAR_ID_TAG = "calendar_id"
 CHROME_SECTION = "chrome"
 CHROME_PATH_TAG = "path"
 HTML_FILE_TAG = "html_file"
-BOOT_ARGUMENTS_TAG = "bootHtmlArgument"
 
 
 @dataclass
@@ -30,7 +29,6 @@ class Config:
     calendarId: str = ""
     chromePath: str = "C:/Program Files/Google/Chrome/Application/chrome.exe"
     htmlFile: str = "display.html"
-    bootHtmlArgument: str = "maskInitial=true"
 
 
 def load_config() -> Config:
@@ -68,9 +66,6 @@ def load_config() -> Config:
         if configParsed.has_option(CHROME_SECTION, HTML_FILE_TAG):
             cfg.htmlFile = configParsed.get(CHROME_SECTION, HTML_FILE_TAG)
 
-        if configParsed.has_option(CHROME_SECTION, BOOT_ARGUMENTS_TAG):
-            cfg.bootHtmlArgument = configParsed.get(CHROME_SECTION, BOOT_ARGUMENTS_TAG)
-
     return cfg
 
 
@@ -81,4 +76,3 @@ if __name__ == "__main__":
     print("Calendar ID:", cfg.calendarId)
     print("Chrome Path:", cfg.chromePath)
     print("HTML File:", cfg.htmlFile)
-    print("Boot Arguments:", cfg.bootHtmlArgument)
