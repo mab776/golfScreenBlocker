@@ -1,0 +1,1 @@
+"C:/Program Files/Google/Chrome/Application/chrome.exe" --kiosk --disable-infobars --noerrdialogs --disable-component-update --check-for-update-interval=31536000 --no-default-browser-check --no-first-run --disable-session-crashed-bubble --disable-pinch --disable-features=TranslateUI "C:\Users\mab77\Bureau\perso\GolfLeBirdie\screenBlocker\golfScreenBlocker\display.html"
