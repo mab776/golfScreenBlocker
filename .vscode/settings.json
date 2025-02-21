@@ -5,5 +5,8 @@
     "editor.defaultFormatter": "ms-python.autopep8",
     "[html]": {
         "editor.defaultFormatter": "vscode.html-language-features"
+    },
+    "[css]": {
+        "editor.defaultFormatter": "vscode.css-language-features"
     }
 }

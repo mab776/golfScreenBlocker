@@ -21,14 +21,29 @@ hr {
     margin: 20px 0;
 }
 
+/* Center contents inside the QR section */
 .qr-section {
     bottom: 0;
     width: 100%;
     background-color: black;
     padding: 10px 0;
-    text-align: center; /* Center contents inside the QR section */
+    text-align: center;
 }
 
+/* Ensures the generated QR code is treated as inline element */
 #qrcode {
-    display: inline-block; /* Ensures the generated QR code is treated as inline element */
+    display: inline-block;
+}
+
+/* Fade-in effect for the initial message */
+
+/* Initial state: hidden */
+#initialMessage {
+    opacity: 0;
+    transition: opacity 8s;
+}
+
+/* Visible state: trigger fade-in */
+#initialMessage.visible {
+    opacity: 1;
 }

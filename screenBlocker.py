@@ -12,19 +12,19 @@ Client needs:
 
 - 5min before an event start, we remove the screen blocker.
 - At the exact time of the event end, if there is no other event after,
-  we put the screen blocker with this message (long duration message):
+  we put the screen blocker with this message (default message):
     "all good things come to an end, your time is up.
      If you would like to extend, please add time to your booking via the le birdie app.
      Thanks for playing!"
   (the message will be french and english)
 - If there is another event (back-to-back booking) immediately following,
   at the exact time of the event end,
-  we display the screen blocker for 10 seconds with this message (short duration message):
+  we display the screen blocker for 20 seconds with this message (backtoback message):
     "all good things come to an end, the next booking is ready to begin.
      Have a great day!"
   (the message will be french and english)
 - at boot, if no event in the next 5min, we display the screen blocker.
-  with the default (long duration message)
+  with the default message.
 
 """
 
@@ -151,7 +151,7 @@ def startChrome(msgType: MessageType = MessageType.TIMEUP) -> None:
     """
     Start Chrome in kiosk mode, passing the message type as a query parameter.
     MessageType.TIMEUP indicates the long-duration message.
-    MessageType.BACK_TO_BACK indicates the short (10-second) message.
+    MessageType.BACK_TO_BACK indicates the short (20-second) message.
     """
     # Do not start if Chrome is already running.
     try:
@@ -204,8 +204,11 @@ def main() -> None:
                             nextEvent["start"].get("dateTime", nextEvent["start"].get("date"))
                         )
                         # Back-to-back if the next event starts exactly when the last one ended.
-                        if (nextStart - lastEnd).total_seconds() == 0:
+                        if (nextStart - lastEnd).total_seconds() < 5*60:
                             msgType = MessageType.BACK_TO_BACK
+                            startChrome(msgType)
+                            time.sleep(20)
+                            continue
                     startChrome(msgType)
         except Exception as e:
             print("Error in main loop:", e)

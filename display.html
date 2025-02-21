@@ -5,39 +5,21 @@
     <meta charset="UTF-8">
     <title>Please Wait</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="qrcode.min.js"></script>
 </head>
 
 <body>
     <div class="container">
         <div id="initialMessage">
             <p>
-                Merci d'avoir joué, en espérant vous revoir bientôt!<br>
-                pour tout problème, contactez-nous au : (438) 932-5065<br>
-                Pour réserver à nouveau, scannez le code QR
+                Toutes les bonnes choses ont une fin, votre temps est écoulé.<br>
+                Pour tout problème, contactez-nous au : (438) 932-5065<br>
             </p>
             <hr>
             <p>
-                Time's up! Thanks for playing, we hope to see you soon!<br>
-                for any problem contact us at : (438) 932-5065<br>
-                For a new reservation, scan the QR code
+                All good things come to an end, your time is up.<br>
+                If you would like to extend, please add time to your booking via the Le Birdie app.<br>
+                For any problem, contact us at : (438) 932-5065<br>
             </p>
-        </div>
-        <div id="defaultMessage" style="display: none;">
-            <p>
-                Veuillez attendre l'heure prévue<br>
-                pour tout problème, contactez-nous au : (438) 932-5065<br>
-                Pour réserver à nouveau, scannez le code QR
-            </p>
-            <hr>
-            <p>
-                Please wait for your scheduled time<br>
-                for any problem contact us at : (438) 932-5065<br>
-                For a new reservation, scan the QR code
-            </p>
-        </div>
-        <div id="qrSection" class="qr-section">
-            <div id="qrcode"></div>
         </div>
     </div>
     <script>
@@ -50,33 +32,41 @@
 
         document.addEventListener("DOMContentLoaded", function ()
         {
-            // If maskInitial parameter is set to true, hide the initial message immediately.
-            if (getQueryParam("maskInitial") === "true")
+            const msg = getQueryParam("msg");
+            const initialMessageEl = document.getElementById('initialMessage');
+
+            if (msg === "backtoback")
             {
-                document.getElementById('initialMessage').style.display = 'none';
-                document.getElementById('defaultMessage').style.display = 'block';
+                // Update the message for back-to-back booking with both French and English text
+                initialMessageEl.innerHTML = `
+          <p>
+            Toutes les bonnes choses ont une fin,<br>
+            la prochaine réservation est prête à débuter.<br>
+            Bonne journée!
+          </p>
+          <hr>
+          <p>
+            All good things come to an end,<br>
+            the next booking is ready to begin.<br>
+            Have a great day!
+          </p>`;
+                // Hide the message after 10 seconds
+                setTimeout(function ()
+                {
+                    initialMessageEl.style.display = 'none';
+                }, 20 * 1000);
+            }
+            else if (msg === "timeup")
+            {
+                // For "timeup", show the long duration message (no changes needed)
             }
 
-            // Generate QR code after the DOM loads
-            var qrcode = new QRCode(document.getElementById("qrcode"), {
-                text: "https://www.lebirdie.golf/reserver-un-simulateur",
-                width: 200,
-                height: 200,
-                colorDark: "#ffffff",
-                colorLight: "#000000",
-                correctLevel: QRCode.CorrectLevel.M
-            });
+            // Wait 2 seconds before triggering the fade-in
+            setTimeout(function ()
+            {
+                initialMessageEl.classList.add('visible');
+            }, 2000);
         });
-
-        // After 5 minutes switch to the default message (only if not already masked).
-        setTimeout(function ()
-        {
-            if (document.getElementById('initialMessage').style.display !== 'none')
-            {
-                document.getElementById('initialMessage').style.display = 'none';
-                document.getElementById('defaultMessage').style.display = 'block';
-            }
-        }, 5 * 60 * 1000); // 5 minutes
     </script>
 </body>
 
