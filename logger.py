@@ -15,8 +15,7 @@ if not LOG_FOLDER.exists():
 
 def touchFile(path: Union[str, Path]) -> None:
     '''
-    create an empty file if it doesn't exist,
-    also create the parent folder if it doesn't exist
+    create an empty file if it doesn't exist
     '''
     path = Path(path)
     if not path.exists():
@@ -28,7 +27,7 @@ def purge_old_logs() -> None:
     Delete log files older than KEEP_LOGS_FOR_DAYS based on the date extracted from the file name.
     Expected file name format: YYYY-MM-DD.log
     '''
-    cutoff_date = datetime.now(tz=timezone.utc) - timedelta(days=KEEP_LOGS_FOR_DAYS)
+    cutoff_date = datetime.now() - timedelta(days=KEEP_LOGS_FOR_DAYS)
     for logfile in LOG_FOLDER.glob("*.log"):
         try:
             file_date = datetime.strptime(logfile.stem, "%Y-%m-%d").replace(tzinfo=timezone.utc)
@@ -48,7 +47,7 @@ class Logger(object):
 
         self.doFileLogging: bool = doFileLogging
         self.formatFile: str = "%Y-%m-%d.log"
-        self.now: datetime = datetime.now(tz=timezone.utc)
+        self.now: datetime = datetime.now()
         self.fileName: str = self.now.strftime(self.formatFile)
         self.file: Path = LOG_FOLDER / self.fileName
         self.moduleName: str = moduleName
@@ -66,7 +65,7 @@ class Logger(object):
         # Set the global exception handler
         sys.excepthook = self.globalExceptionHandler
 
-        bootLogo: str = f"*          {self.moduleName} BOOT          *"
+        bootLogo: str = f"*      {self.moduleName} BOOT      *"
 
         print()
         print()
@@ -81,6 +80,7 @@ class Logger(object):
             return
 
         self.compareFileName()
+        # if the only argument is a newline, don't print the time
         if len(args) == 1 and args[0] == '\n':
             time: str = ''
         else:
@@ -109,7 +109,7 @@ class Logger(object):
         self.terminal.write(messageStrTime)
 
     def fillFileName(self) -> None:
-        self.now = datetime.now(tz=timezone.utc)
+        self.now = datetime.now()
         self.fileName = self.now.strftime(self.formatFile)
 
     def compareFileName(self) -> None:

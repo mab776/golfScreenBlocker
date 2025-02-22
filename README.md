@@ -1,5 +1,5 @@
 # golfScreenBlocker
-daemon that checks a Google Calendar for active events and launches a Chrome browser in kiosk mode if no event is active.
+daemon that checks a Google Calendar for active events and launches a Chrome browser in kiosk mode if no event is active to lock the screen. The daemon will remove the screen-lock 5 minutes before an event starts and will lock the screen again when the event ends.
 
 ## Installation Windows
 - Clone the repository
@@ -7,7 +7,7 @@ daemon that checks a Google Calendar for active events and launches a Chrome bro
 - create a virtual environment
    - `python -m venv venv`
 - activate the virtual environment
-    - `source venv/bin/activate`
+    - `venv\Scripts\activate`
 - install the required packages
     - `pip install -r requirements.txt`
 - copy the 'screenBlockerConfig_template.cfg' file to 'screenBlockerConfig.cfg' beside the repo folder and rename the file to 'screenBlockerConfig.cfg'
@@ -28,12 +28,12 @@ daemon that checks a Google Calendar for active events and launches a Chrome bro
 - Create a new project
 - Enable the Google Calendar API
 - Create a new service account
-- Add the service account to the calendar with 'See details of events' permission
 - Create a key for the service account (JSON)
 - Download the service account key as a JSON file
 - Copy the key beside the 'golfScreenBlocker' folder and copy it's full path to the 'screenBlockerConfig.cfg' file under the [google] section as the value for the serviceAccountJsonPath.
+- Share your calendar to the service account email with 'See details of events' permission
 
-## Find calendar id
+## Find calendar ID
 You can find your calendar ID in the Google Calendar web interface by following these steps:
 
 - Open Google Calendar in a web browser.
@@ -45,9 +45,8 @@ You can find your calendar ID in the Google Calendar web interface by following 
 
 ## Use case
 
-This is for a golf simulator. The simulator is booked in 15min slots.
-The screen blocker is a webpage that displays a message when the event ends or when there is no event
-active in the Google Calendar. The message is displayed in a Chrome browser kiosk fullscreen mode.
+This is for a golf simulator. The simulator is booked in 15min+ slots.
+The screen blocker is a webpage that displays a message when the event ends or when there is no event active in the Google Calendar. The message is displayed in a Chrome browser kiosk fullscreen mode.
 
 ## Actions
 
@@ -58,8 +57,8 @@ active in the Google Calendar. The message is displayed in a Chrome browser kios
      If you would like to extend, please add time to your booking via the le birdie app.
      Thanks for playing!"
   (the message will be french and english)
-- after 20sec of the default message, the message fade-out and a padlock is displayed
-  the padlock will bounce around to save the projector lamp.
+- after 20sec of the default message, the message fade-out and a padlock is displayed.
+  The padlock will bounce around to save the projector lamp.
 - If there is another event (back-to-back booking) immediately following,
   at the exact time of the event end,
   we display the screen blocker for 20 seconds with this message (backtoback message):

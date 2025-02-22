@@ -9,21 +9,26 @@
 
 <body>
     <div class="container">
-        <div id="defaultMessage">
-            <p>
-                Toutes les bonnes choses ont une fin, votre temps est écoulé.<br>
-                Si vous souhaitez prolonger, veuillez ajouter du temps à votre réservation<br>
-                via l'application Le Birdie.
-            </p>
-            <hr>
-            <p>
-                All good things come to an end, your time is up.<br>
-                If you would like to extend, please add time to your booking<br>
-                via the Le Birdie app.
-            </p>
+        <div id="fadeContainer">
+            <div id="topPadlock">
+                <img src="padlock.png">
+            </div>
+            <div id="defaultMessage">
+                <p>
+                    Toutes les bonnes choses ont une fin, votre temps est écoulé.<br>
+                    Si vous souhaitez prolonger, veuillez ajouter du temps à votre réservation<br>
+                    via l'application Le Birdie.
+                </p>
+                <hr>
+                <p>
+                    All good things come to an end, your time is up.<br>
+                    If you would like to extend, please add time to your booking<br>
+                    via the Le Birdie app.
+                </p>
+            </div>
         </div>
         <div id="padlock">
-            <img src="padlock.png" alt="Padlock">
+            <img src="padlock.png">
         </div>
     </div>
     <script>
@@ -33,11 +38,12 @@
         document.addEventListener("DOMContentLoaded", () =>
         {
             const msg = getQueryParam("msg");
-            const defaultMessageEl = document.getElementById("defaultMessage");
-            const padlockEl = document.getElementById("padlock");
+            const fadeContainer = document.getElementById("fadeContainer");
+            const defaultMessageElement = document.getElementById("defaultMessage");
+            const padlockElement = document.getElementById("padlock");
             const container = document.querySelector(".container");
 
-            // Function to initialize and animate the padlock
+            // Function to initialize and animate the padlock (for the moving element)
             const revealPadlock = () =>
             {
                 // Set initial random position
@@ -45,63 +51,60 @@
                 const containerHeight = container.clientHeight;
                 let pPosX = Math.random() * (containerWidth - 100);
                 let pPosY = Math.random() * (containerHeight - 100);
-                padlockEl.style.left = `${pPosX}px`;
-                padlockEl.style.top = `${pPosY}px`;
+                padlockElement.style.left = pPosX + "px";
+                padlockElement.style.top = pPosY + "px";
+                // Fade in the padlock immediately
+                padlockElement.style.transition = "opacity 1s";
+                padlockElement.style.opacity = "0.25";
+                const padlockImg = padlockElement.querySelector("img");
 
-                // Fade in the padlock
-                padlockEl.style.transition = "opacity 1s";
-                padlockEl.style.opacity = "1";
-                const padlockImg = padlockEl.querySelector("img");
-                setTimeout(() =>
-                {
-                    padlockImg.style.transition = "opacity 1s";
-                    padlockImg.style.opacity = "0.25"; // optional transparency
-                }, 50);
-
-                // Initialize velocity for bounce animation
-                let pVx = ((Math.random() * 2 + 1) * (Math.random() < 0.5 ? 1 : -1)) * 0.5;
-                let pVy = ((Math.random() * 2 + 1) * (Math.random() < 0.5 ? 1 : -1)) * 0.5;
+                // Fixed random velocity using a single Math.random call per axis
+                let speedFactor = 1.2;
+                let rX = Math.random();
+                let padlockVelocityX = ((rX + 1) * (rX < 0.5 ? 1 : -1)) * speedFactor;
+                let rY = Math.random();
+                let padlockVelocityY = ((rY + 1) * (rY < 0.5 ? 1 : -1)) * speedFactor;
 
                 const animatePadlock = () =>
                 {
-                    pPosX += pVx;
-                    pPosY += pVy;
-                    const pWidth = padlockImg.offsetWidth || 100;
-                    const pHeight = padlockImg.offsetHeight || 100;
+                    const padlockWidth = padlockImg.offsetWidth;
+                    const padlockHeight = padlockImg.offsetHeight;
+                    pPosX += padlockVelocityX;
+                    pPosY += padlockVelocityY;
 
                     // Horizontal boundaries
                     if (pPosX < 0)
                     {
                         pPosX = 0;
-                        pVx = Math.abs(pVx);
-                    } else if (pPosX + pWidth > containerWidth)
+                        padlockVelocityX = Math.abs(padlockVelocityX);
+                    } else if (pPosX + padlockWidth > containerWidth)
                     {
-                        pPosX = containerWidth - pWidth;
-                        pVx = -Math.abs(pVx);
+                        pPosX = containerWidth - padlockWidth;
+                        padlockVelocityX = -Math.abs(padlockVelocityX);
                     }
 
                     // Vertical boundaries
                     if (pPosY < 0)
                     {
                         pPosY = 0;
-                        pVy = Math.abs(pVy);
-                    } else if (pPosY + pHeight > containerHeight)
+                        padlockVelocityY = Math.abs(padlockVelocityY);
+                    } else if (pPosY + padlockHeight > containerHeight)
                     {
-                        pPosY = containerHeight - pHeight;
-                        pVy = -Math.abs(pVy);
+                        pPosY = containerHeight - padlockHeight;
+                        padlockVelocityY = -Math.abs(padlockVelocityY);
                     }
 
-                    padlockEl.style.left = `${pPosX}px`;
-                    padlockEl.style.top = `${pPosY}px`;
+                    padlockElement.style.left = pPosX + "px";
+                    padlockElement.style.top = pPosY + "px";
                     requestAnimationFrame(animatePadlock);
                 };
                 requestAnimationFrame(animatePadlock);
             };
 
-            // Modify message if "backtoback"
+            // If msg is "backtoback", modify the default message content
             if (msg === "backtoback")
             {
-                defaultMessageEl.innerHTML = `
+                defaultMessageElement.innerHTML = `
                     <p>
                         Toutes les bonnes choses ont une fin,<br>
                         la prochaine réservation est prête à débuter.<br>
@@ -114,30 +117,30 @@
                         Have a great day!
                     </p>`;
             }
+            // When msg is "boot", hide the container and immediately reveal the moving padlock.
             else if (msg === "boot")
             {
-                // Immediately hide the default message and reveal the padlock.
-                defaultMessageEl.style.display = "none";
+                fadeContainer.style.display = "none";
                 revealPadlock();
                 return;
             }
 
-            // Fade in the default message after 1s.
+            // Fade in the container (both padlock and text) after 1s.
             setTimeout(() =>
             {
-                defaultMessageEl.classList.add("visible");
+                fadeContainer.classList.add("visible");
             }, 1000);
 
-            // For non-"backtoback" messages, wait 20s then fade out default message and reveal padlock.
+            // For non-"backtoback" messages: fade-out the container after 20s, then reveal the padlock.
             if (msg !== "backtoback")
             {
                 setTimeout(() =>
                 {
-                    defaultMessageEl.style.transition = "opacity 1s";
-                    defaultMessageEl.style.opacity = "0";
+                    fadeContainer.style.transition = "opacity 1s";
+                    fadeContainer.style.opacity = "0";
                     setTimeout(() =>
                     {
-                        defaultMessageEl.style.display = "none";
+                        fadeContainer.style.display = "none";
                         revealPadlock();
                     }, 1000);
                 }, 20000);

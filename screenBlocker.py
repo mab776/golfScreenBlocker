@@ -31,26 +31,24 @@ Client needs:
 - at boot, if no event in the next 5min, we display the screen blocker.
   with the default message.
 """
-
-import os
-import sys
-import time
-import psutil
-import subprocess
-from enum import Enum
-from datetime import datetime, timedelta, timezone
-from typing import Any, Optional, Tuple
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-from typings_google_calendar_api.events import Event
-from config import Config, load_config
-from logger import Logger
-
-# Import the service account module
 from google.oauth2 import service_account
+from config import Config, load_config
+from typings_google_calendar_api.events import Event
+from googleapiclient.errors import HttpError
+from googleapiclient.discovery import build
+from typing import Any, Optional, Tuple
+from datetime import datetime, timedelta, timezone
+from enum import Enum
+import subprocess
+import psutil
+import time
+import sys
+import os
+
+from logger import Logger
+Logger("SCREEN BLOCKER", True)
 
 DUAL_SCREEN = False
-
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
 
@@ -59,9 +57,6 @@ class MessageType(Enum):
     backToback = "backtoback"
     boot = "boot"
 
-
-# Initialize the logger
-Logger("SCREEN BLOCKER", True)
 
 # Load configuration settings for Google Calendar and Chrome
 try:
