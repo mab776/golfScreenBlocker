@@ -12,15 +12,11 @@ body {
     text-align: center;
 }
 
-/* Updated container to fill the screen for the animation.
-   Remove or adjust max-width if you want to restrict the content. */
 .container {
     position: relative;
     width: 100%;
     height: 100vh;
     overflow: hidden;
-    /* Optionally, remove or comment out the next line if full screen is desired */
-    /* max-width: 80%; */
 }
 
 hr {
@@ -43,7 +39,6 @@ hr {
     padding: 10px;
 }
 
-/* Visible state: trigger fade-in */
 #defaultMessage.visible {
     opacity: 1;
 }
@@ -51,14 +46,13 @@ hr {
 #padlock {
     position: fixed;
     z-index: 1000;
-    /* adjust as needed */
-    width: 80px;
-    /* hidden until revealed via JS */
+    /* Hide initially; JS reveals it later */
     opacity: 0;
-    transition: opacity 1s;
 }
 
 #padlock img {
-    width: 100%;
+    /* Adjust size as needed */
+    width: 80px;
     height: auto;
+    transition: opacity 1s;
 }
