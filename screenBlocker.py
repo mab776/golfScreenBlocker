@@ -29,6 +29,7 @@ Client needs:
   with the default message.
 """
 
+import os
 import sys
 import time
 import psutil
@@ -42,10 +43,18 @@ from typings_google_calendar_api.events import Event
 from config import Config, load_config
 from logger import Logger
 
+# Import the service account module
+from google.oauth2 import service_account
+
+DUAL_SCREEN = False
+
+SCOPES = ['https://www.googleapis.com/auth/calendar']
+
 
 class MessageType(Enum):
-    TIMEUP = "timeup"
-    BACK_TO_BACK = "backtoback"
+    timesUp = "timesUp "
+    backToback = "backtoback"
+    boot = "boot"
 
 
 # Initialize the logger
@@ -60,11 +69,13 @@ except Exception as e:
 
 
 def getCalendarService() -> Any:
-    """Try to build and return the Google Calendar API service.
+    """Try to build and return the Google Calendar API service using service account credentials.
     Retries every 30 seconds if connection fails."""
     while True:
         try:
-            serviceInstance = build("calendar", "v3", developerKey=cfg.apiKey)
+            # Load credentials from the JSON file (cfg.serviceAccountJsonPath now holds the JSON file path)
+            credentials = service_account.Credentials.from_service_account_file(cfg.serviceAccountJsonPath, scopes=SCOPES)
+            serviceInstance = build("calendar", "v3", credentials=credentials)
             print("Google Calendar service initialized successfully.")
             return serviceInstance
         except Exception as e:
@@ -73,13 +84,14 @@ def getCalendarService() -> Any:
             time.sleep(30)
 
 
-# Google Calendar API setup using API key authentication
+# Google Calendar API setup using service account authentication
 calendarService: Any = getCalendarService()
 
 # Chrome kiosk mode command
 kioskCommand: list[str] = [
     cfg.chromePath,
     "--kiosk",
+    "--incognito",
     "--disable-infobars",
     "--noerrdialogs",
     "--disable-component-update",
@@ -94,16 +106,11 @@ kioskCommand: list[str] = [
 
 def getEvents() -> Tuple[Optional[Event], Optional[Event], Optional[Event]]:
     """
-    Returns a tuple: (currentEvent, lastEvent, nextEvent) by checking only a narrow time window:
-    from 5 minutes ago to 5 minutes in the future.
-    - currentEvent: an event active now (startTime <= now < endTime).
-    - nextEvent: the next event (first event with startTime > now).
-    - lastEvent: the most recent event that ended (endTime <= now).
+    Returns a tuple: (currentEvent, lastEvent, nextEvent) by checking only a narrow time window.
     """
     now = datetime.now(timezone.utc)
     timeMin = now - timedelta(minutes=5)
     timeMax = now + timedelta(minutes=5)
-
     try:
         events: list[Event] = calendarService.events().list(
             calendarId=cfg.calendarId,
@@ -143,20 +150,22 @@ def getEvents() -> Tuple[Optional[Event], Optional[Event], Optional[Event]]:
 
 def killChrome() -> None:
     """Kill all Chrome processes, if any are running."""
+    alreadyLogged = False
     try:
         for process in psutil.process_iter(attrs=["pid", "name"]):
             if "chrome" in process.info["name"].lower():
-                print(f"Killing Chrome process: {process.info['pid']}")
                 psutil.Process(process.info["pid"]).terminate()
+                if not alreadyLogged:
+                    print("Chrome processes found. Terminating...")
+                    alreadyLogged = True
     except Exception as e:
         print("Error killing Chrome processes:", e)
 
 
-def startChrome(msgType: MessageType = MessageType.TIMEUP) -> None:
+def startChrome(msgType: MessageType = MessageType.timesUp) -> None:
     """
-    Start Chrome in kiosk mode, passing the message type as a query parameter.
-    MessageType.TIMEUP indicates the long-duration message.
-    MessageType.BACK_TO_BACK indicates the short (20-second) message.
+    Start Chrome in kiosk mode. If DUAL_SCREEN is True, launch two instances
+    with different window-position flags; otherwise, launch one.
     """
     # Do not start if Chrome is already running.
     try:
@@ -166,12 +175,23 @@ def startChrome(msgType: MessageType = MessageType.TIMEUP) -> None:
     except Exception as e:
         print("Error checking Chrome processes:", e)
 
-    print("Starting Chrome in kiosk mode.")
-    url = cfg.htmlFile + "?msg=" + msgType.value
-    try:
-        subprocess.Popen(kioskCommand + [url])
-    except Exception as e:
-        print("Error starting Chrome:", e)
+    print(f"Starting Chrome in kiosk mode. Message type: {msgType.value}")
+    # url = current path + display.html?msg= + msgType
+    currentPath = os.path.dirname(os.path.realpath(__file__))
+    url = f"file:///{currentPath}/display.html?msg={msgType.value}"
+
+    if DUAL_SCREEN:
+        # Adjust the window positions to match dual-monitor configuration.
+        try:
+            subprocess.Popen(kioskCommand + ["--window-position=0,0", url])
+            subprocess.Popen(kioskCommand + ["--window-position=1920,0", url])
+        except Exception as e:
+            print("Error starting dual-screen Chrome:", e)
+    else:
+        try:
+            subprocess.Popen(kioskCommand + [url])
+        except Exception as e:
+            print("Error starting Chrome:", e)
 
 
 def main() -> None:
@@ -182,10 +202,12 @@ def main() -> None:
             currentEvent, lastEvent, nextEvent = getEvents()
 
             if currentEvent is not None:
+                print("Event active now:", currentEvent["summary"])
                 killChrome()
             else:
                 if boot:
-                    startChrome(msgType=MessageType.TIMEUP)
+                    print("Boot sequence: no event active.")
+                    startChrome(msgType=MessageType.boot)
                     boot = False
                 else:
                     # If a future event is within 5 minutes, disable the blocker.
@@ -200,7 +222,7 @@ def main() -> None:
                             continue  # Skip starting Chrome if a booking is imminent.
 
                     # Determine the appropriate message.
-                    msgType = MessageType.TIMEUP
+                    msgType = MessageType.timesUp
                     if lastEvent is not None and nextEvent is not None:
                         lastEnd = datetime.fromisoformat(
                             lastEvent["end"].get("dateTime", lastEvent["end"].get("date"))
@@ -208,17 +230,17 @@ def main() -> None:
                         nextStart = datetime.fromisoformat(
                             nextEvent["start"].get("dateTime", nextEvent["start"].get("date"))
                         )
-                        # Back-to-back if the next event starts exactly when the last one ended.
-                        if (nextStart - lastEnd).total_seconds() < 5*60:
-                            msgType = MessageType.BACK_TO_BACK
+                        # Trigger back-to-back mode if the gap is very small (e.g. <30 sec)
+                        if (nextStart - lastEnd).total_seconds() < 30:
+                            msgType = MessageType.backToback
                             startChrome(msgType)
                             time.sleep(20)
-                            continue
+                            continue  # will kill the browser
                     startChrome(msgType)
         except Exception as e:
             print("Error in main loop:", e)
         finally:
-            time.sleep(30)
+            time.sleep(5)
 
 
 if __name__ == "__main__":

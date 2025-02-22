@@ -14,7 +14,7 @@ daemon that checks a Google Calendar for active events and launches a Chrome bro
     - `cp screenBlockerConfig_template.cfg ../screenBlockerConfig.cfg`
 - edit the 'screenBlockerConfig.cfg' file to include the required information
     - [google]
-        - key : the API key for the Google Calendar API
+        - serviceAccountJsonPath : the service account key file path (JSON)
         - calendar_id : the ID of the calendar to check
     - [chrome] (optional)
         - path : the path to the Chrome executable
@@ -23,13 +23,33 @@ daemon that checks a Google Calendar for active events and launches a Chrome bro
     - move the shortcut to the startup folder
         - `C:\Users\<username>\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup`
 
-## use case
+## Create a Google Service Account
+- Go to the Google Cloud Console
+- Create a new project
+- Enable the Google Calendar API
+- Create a new service account
+- Add the service account to the calendar with 'See details of events' permission
+- Create a key for the service account (JSON)
+- Download the service account key as a JSON file
+- Copy the key beside the 'golfScreenBlocker' folder and copy it's full path to the 'screenBlockerConfig.cfg' file under the [google] section as the value for the serviceAccountJsonPath.
+
+## Find calendar id
+You can find your calendar ID in the Google Calendar web interface by following these steps:
+
+- Open Google Calendar in a web browser.
+- On the left sidebar under "My calendars", hover over the calendar you want to use and click the three dots that appear.
+- Choose "Settings and sharing."
+- Scroll down to the "Integrate calendar" section.
+- You will see the "Calendar ID" there (it’s often an email-like address).
+- Copy the calendar ID and paste it into the 'screenBlockerConfig.cfg' file, under the [google] section as the value for the calendar_id.
+
+## Use case
 
 This is for a golf simulator. The simulator is booked in 15min slots.
 The screen blocker is a webpage that displays a message when the event ends or when there is no event
 active in the Google Calendar. The message is displayed in a Chrome browser kiosk fullscreen mode.
 
-## actions
+## Actions
 
 - 5min before an event start, we remove the screen blocker.
 - At the exact time of the event end, if there is no other event after,
@@ -38,6 +58,8 @@ active in the Google Calendar. The message is displayed in a Chrome browser kios
      If you would like to extend, please add time to your booking via the le birdie app.
      Thanks for playing!"
   (the message will be french and english)
+- after 20sec of the default message, the message fade-out and a padlock is displayed
+  the padlock will bounce around to save the projector lamp.
 - If there is another event (back-to-back booking) immediately following,
   at the exact time of the event end,
   we display the screen blocker for 20 seconds with this message (backtoback message):

@@ -15,13 +15,12 @@ CONFIG_FILE = "screenBlockerConfig.cfg"
 
 # configuration file [google] section and tags
 GOOGLE_SECTION = "google"
-API_KEY_TAG = "key"
+API_KEY_TAG = "serviceAccountJsonPath"
 CALENDAR_ID_TAG = "calendar_id"
 
 # configuration file [chrome] section and tags
 CHROME_SECTION = "chrome"
 CHROME_PATH_TAG = "path"
-HTML_FILE_TAG = "html_file"
 
 
 @dataclass
@@ -29,7 +28,7 @@ class Config:
     """
     A dataclass to hold configuration values.
     """
-    apiKey: str = ""
+    serviceAccountJsonPath: str = ""
     calendarId: str = ""
     chromePath: str = "C:/Program Files/Google/Chrome/Application/chrome.exe"
 
@@ -52,7 +51,7 @@ def load_config() -> Config:
 
     # mandatory values
     if configParsed.has_option(GOOGLE_SECTION, API_KEY_TAG):
-        cfg.apiKey = configParsed.get(GOOGLE_SECTION, API_KEY_TAG)
+        cfg.serviceAccountJsonPath = configParsed.get(GOOGLE_SECTION, API_KEY_TAG)
     else:
         raise ValueError("Google API key not found in configuration file.")
 
@@ -61,7 +60,7 @@ def load_config() -> Config:
     else:
         raise ValueError("Google Calendar ID not found in configuration file.")
 
-    # Optional values
+    # Optional values for the Chrome path
     if configParsed.has_section(CHROME_SECTION):
         if configParsed.has_option(CHROME_SECTION, CHROME_PATH_TAG):
             cfg.chromePath = configParsed.get(CHROME_SECTION, CHROME_PATH_TAG)
@@ -72,6 +71,6 @@ def load_config() -> Config:
 # test the module
 if __name__ == "__main__":
     cfg = load_config()
-    print("Google Key:", cfg.apiKey)
+    print("Google Key:", cfg.serviceAccountJsonPath)
     print("Calendar ID:", cfg.calendarId)
     print("Chrome Path:", cfg.chromePath)

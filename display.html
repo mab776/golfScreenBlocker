@@ -37,97 +37,111 @@
             const padlockEl = document.getElementById("padlock");
             const container = document.querySelector(".container");
 
+            // Function to initialize and animate the padlock
+            const revealPadlock = () =>
+            {
+                // Set initial random position
+                const containerWidth = container.clientWidth;
+                const containerHeight = container.clientHeight;
+                let pPosX = Math.random() * (containerWidth - 100);
+                let pPosY = Math.random() * (containerHeight - 100);
+                padlockEl.style.left = `${pPosX}px`;
+                padlockEl.style.top = `${pPosY}px`;
+
+                // Fade in the padlock
+                padlockEl.style.transition = "opacity 1s";
+                padlockEl.style.opacity = "1";
+                const padlockImg = padlockEl.querySelector("img");
+                setTimeout(() =>
+                {
+                    padlockImg.style.transition = "opacity 1s";
+                    padlockImg.style.opacity = "0.25"; // optional transparency
+                }, 50);
+
+                // Initialize velocity for bounce animation
+                let pVx = ((Math.random() * 2 + 1) * (Math.random() < 0.5 ? 1 : -1)) * 0.5;
+                let pVy = ((Math.random() * 2 + 1) * (Math.random() < 0.5 ? 1 : -1)) * 0.5;
+
+                const animatePadlock = () =>
+                {
+                    pPosX += pVx;
+                    pPosY += pVy;
+                    const pWidth = padlockImg.offsetWidth || 100;
+                    const pHeight = padlockImg.offsetHeight || 100;
+
+                    // Horizontal boundaries
+                    if (pPosX < 0)
+                    {
+                        pPosX = 0;
+                        pVx = Math.abs(pVx);
+                    } else if (pPosX + pWidth > containerWidth)
+                    {
+                        pPosX = containerWidth - pWidth;
+                        pVx = -Math.abs(pVx);
+                    }
+
+                    // Vertical boundaries
+                    if (pPosY < 0)
+                    {
+                        pPosY = 0;
+                        pVy = Math.abs(pVy);
+                    } else if (pPosY + pHeight > containerHeight)
+                    {
+                        pPosY = containerHeight - pHeight;
+                        pVy = -Math.abs(pVy);
+                    }
+
+                    padlockEl.style.left = `${pPosX}px`;
+                    padlockEl.style.top = `${pPosY}px`;
+                    requestAnimationFrame(animatePadlock);
+                };
+                requestAnimationFrame(animatePadlock);
+            };
+
+            // Modify message if "backtoback"
             if (msg === "backtoback")
             {
                 defaultMessageEl.innerHTML = `
-          <p>
-            Toutes les bonnes choses ont une fin,<br>
-            la prochaine réservation est prête à débuter.<br>
-            Bonne journée!
-          </p>
-          <hr>
-          <p>
-            All good things come to an end,<br>
-            the next booking is ready to begin.<br>
-            Have a great day!
-          </p>`;
+                    <p>
+                        Toutes les bonnes choses ont une fin,<br>
+                        la prochaine réservation est prête à débuter.<br>
+                        Bonne journée!
+                    </p>
+                    <hr>
+                    <p>
+                        All good things come to an end,<br>
+                        the next booking is ready to begin.<br>
+                        Have a great day!
+                    </p>`;
+            }
+            else if (msg === "boot")
+            {
+                // Immediately hide the default message and reveal the padlock.
+                defaultMessageEl.style.display = "none";
+                revealPadlock();
+                return;
             }
 
-            // Fade in default message after 2s.
+            // Fade in the default message after 1s.
             setTimeout(() =>
             {
                 defaultMessageEl.classList.add("visible");
-            }, 2000);
+            }, 1000);
 
-            // After 5 seconds, fade out the default message then reveal the padlock.
-            setTimeout(() =>
+            // For non-"backtoback" messages, wait 20s then fade out default message and reveal padlock.
+            if (msg !== "backtoback")
             {
-                // Fade out the default message over 1s.
-                defaultMessageEl.style.transition = "opacity 1s";
-                defaultMessageEl.style.opacity = "0";
-                // After fade out, hide the default message and show the padlock.
                 setTimeout(() =>
                 {
-                    defaultMessageEl.style.display = "none";
-
-                    // Initialize padlock starting position.
-                    const containerWidth = container.clientWidth;
-                    const containerHeight = container.clientHeight;
-                    let pPosX = Math.random() * (containerWidth - 100);
-                    let pPosY = Math.random() * (containerHeight - 100);
-                    padlockEl.style.left = `${pPosX}px`;
-                    padlockEl.style.top = `${pPosY}px`;
-
-                    // Initialize velocity (2x slower movement).
-                    let pVx = ((Math.random() * 2 + 1) * (Math.random() < 0.5 ? 1 : -1)) * 0.5;
-                    let pVy = ((Math.random() * 2 + 1) * (Math.random() < 0.5 ? 1 : -1)) * 0.5;
-
-                    // Fade in the padlock over 1s.
-                    padlockEl.style.transition = "opacity 1s";
-                    padlockEl.style.opacity = "1";
-                    const padlockImg = padlockEl.querySelector("img");
+                    defaultMessageEl.style.transition = "opacity 1s";
+                    defaultMessageEl.style.opacity = "0";
                     setTimeout(() =>
                     {
-                        padlockImg.style.transition = "opacity 1s";
-                        padlockImg.style.opacity = "0.25"; // optional transparency
-                    }, 50);
-
-                    // Bounce animation.
-                    const animatePadlock = () =>
-                    {
-                        pPosX += pVx;
-                        pPosY += pVy;
-                        const pWidth = padlockImg.offsetWidth || 100;
-                        const pHeight = padlockImg.offsetHeight || 100;
-
-                        // Check horizontal boundaries.
-                        if (pPosX < 0)
-                        {
-                            pPosX = 0;
-                            pVx = Math.abs(pVx);
-                        } else if (pPosX + pWidth > containerWidth)
-                        {
-                            pPosX = containerWidth - pWidth;
-                            pVx = -Math.abs(pVx);
-                        }
-                        // Check vertical boundaries.
-                        if (pPosY < 0)
-                        {
-                            pPosY = 0;
-                            pVy = Math.abs(pVy);
-                        } else if (pPosY + pHeight > containerHeight)
-                        {
-                            pPosY = containerHeight - pHeight;
-                            pVy = -Math.abs(pVy);
-                        }
-
-                        padlockEl.style.left = `${pPosX}px`;
-                        padlockEl.style.top = `${pPosY}px`;
-                        requestAnimationFrame(animatePadlock);
-                    };
-                    requestAnimationFrame(animatePadlock);
-                }, 1000);
-            }, 5000);
+                        defaultMessageEl.style.display = "none";
+                        revealPadlock();
+                    }, 1000);
+                }, 20000);
+            }
         });
     </script>
 </body>
