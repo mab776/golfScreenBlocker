@@ -8,7 +8,10 @@ This is for a golf simulator. The simulator is booked in 15min slots.
 The screen blocker is a webpage that displays a message when the event ends or when there is no event
 active in the Google Calendar. The message is displayed in a Chrome browser kiosk fullscreen mode.
 
-TODO message will need to pop on dual screen
+TODO test message will need to pop on dual screen
+TODO back-to-back not working
+TODO full review of the code
+TODO logger UTC instead of local time
 
 Client needs:
 
