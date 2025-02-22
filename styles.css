@@ -12,8 +12,15 @@ body {
     text-align: center;
 }
 
+/* Updated container to fill the screen for the animation.
+   Remove or adjust max-width if you want to restrict the content. */
 .container {
-    max-width: 80%;
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    /* Optionally, remove or comment out the next line if full screen is desired */
+    /* max-width: 80%; */
 }
 
 hr {
@@ -21,29 +28,37 @@ hr {
     margin: 20px 0;
 }
 
-/* Center contents inside the QR section */
-.qr-section {
-    bottom: 0;
-    width: 100%;
-    background-color: black;
-    padding: 10px 0;
-    text-align: center;
+#defaultMessage p {
+    white-space: nowrap;
 }
 
-/* Ensures the generated QR code is treated as inline element */
-#qrcode {
-    display: inline-block;
-}
-
-/* Fade-in effect for the initial message */
-
-/* Initial state: hidden */
-#initialMessage {
+#defaultMessage {
     opacity: 0;
     transition: opacity 8s;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 100%;
+    padding: 10px;
 }
 
 /* Visible state: trigger fade-in */
-#initialMessage.visible {
+#defaultMessage.visible {
     opacity: 1;
+}
+
+#padlock {
+    position: fixed;
+    z-index: 1000;
+    /* adjust as needed */
+    width: 80px;
+    /* hidden until revealed via JS */
+    opacity: 0;
+    transition: opacity 1s;
+}
+
+#padlock img {
+    width: 100%;
+    height: auto;
 }

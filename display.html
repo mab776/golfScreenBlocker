@@ -3,30 +3,31 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Please Wait</title>
+    <title>Screen blocker</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
     <div class="container">
-        <div id="initialMessage">
+        <div id="defaultMessage">
             <p>
-                Toutes les bonnes choses ont une fin,<br>
-                votre temps est écoulé.<br>
-                Si vous souhaitez prolonger,<br>
-                veuillez ajouter du temps à votre réservation via l'application Le Birdie.
+                Toutes les bonnes choses ont une fin, votre temps est écoulé.<br>
+                Si vous souhaitez prolonger, veuillez ajouter du temps à votre réservation<br>
+                via l'application Le Birdie.
             </p>
             <hr>
             <p>
-                All good things come to an end,<br>
-                your time is up.<br>
-                If you would like to extend,<br>
-                please add time to your booking via the Le Birdie app.
+                All good things come to an end, your time is up.<br>
+                If you would like to extend, please add time to your booking<br>
+                via the Le Birdie app.
             </p>
+        </div>
+        <div id="padlock">
+            <img src="padlock.png" alt="Padlock">
         </div>
     </div>
     <script>
-        // Helper: Function to check URL query parameters
+        // Helper: Function to check URL query parameters.
         function getQueryParam(param)
         {
             const params = new URLSearchParams(window.location.search);
@@ -36,34 +37,112 @@
         document.addEventListener("DOMContentLoaded", function ()
         {
             const msg = getQueryParam("msg");
-            const initialMessageEl = document.getElementById('initialMessage');
+            const defaultMessageEl = document.getElementById('defaultMessage');
+            const padlockEl = document.getElementById('padlock');
+            const container = document.querySelector('.container');
 
+            // If "backtoback" is specified, update the text content.
             if (msg === "backtoback")
             {
-                // Update the message for back-to-back booking with both French and English text
-                initialMessageEl.innerHTML = `
-          <p>
-            Toutes les bonnes choses ont une fin,<br>
-            la prochaine réservation est prête à débuter.<br>
-            Bonne journée!
-          </p>
-          <hr>
-          <p>
-            All good things come to an end,<br>
-            the next booking is ready to begin.<br>
-            Have a great day!
-          </p>`;
+                defaultMessageEl.innerHTML = `
+                    <p>
+                        Toutes les bonnes choses ont une fin,<br>
+                        la prochaine réservation est prête à débuter.<br>
+                        Bonne journée!
+                    </p>
+                    <hr>
+                    <p>
+                        All good things come to an end,<br>
+                        the next booking is ready to begin.<br>
+                        Have a great day!
+                    </p>`;
             }
-            else if (msg === "timeup")
-            {
-                // For "timeup", show the long duration message (no changes needed)
-            }
-
-            // Wait 2 seconds before triggering the fade-in
+            // Show the default message (CSS centers it) after 2 seconds.
             setTimeout(function ()
             {
-                initialMessageEl.classList.add('visible');
+                defaultMessageEl.classList.add('visible');
             }, 2000);
+
+            // --- Padlock Bounce Variables & Animation ---
+            let pPosX, pPosY, pVx, pVy;
+
+            function animatePadlock()
+            {
+                pPosX += pVx;
+                pPosY += pVy;
+
+                const containerWidth = container.clientWidth;
+                const containerHeight = container.clientHeight;
+                const padlockImg = padlockEl.querySelector("img");
+                let pWidth = padlockImg ? padlockImg.offsetWidth : 100;
+                let pHeight = padlockImg ? padlockImg.offsetHeight : 100;
+
+                // Bounce off the left.
+                if (pPosX < 0)
+                {
+                    pPosX = 0;
+                    pVx = Math.abs(pVx);
+                }
+                // Bounce off the right.
+                else if (pPosX + pWidth > containerWidth)
+                {
+                    pPosX = containerWidth - pWidth;
+                    pVx = -Math.abs(pVx);
+                }
+                // Bounce off the top.
+                if (pPosY < 0)
+                {
+                    pPosY = 0;
+                    pVy = Math.abs(pVy);
+                }
+                // Bounce off the bottom.
+                else if (pPosY + pHeight > containerHeight)
+                {
+                    pPosY = containerHeight - pHeight;
+                    pVy = -Math.abs(pVy);
+                }
+
+                padlockEl.style.left = pPosX + "px";
+                padlockEl.style.top = pPosY + "px";
+                requestAnimationFrame(animatePadlock);
+            }
+
+            // After 20 seconds, fade out the default message and then fade in the padlock.
+            setTimeout(function ()
+            {
+                // Fade out the default message over 1 second.
+                defaultMessageEl.style.transition = "opacity 1s";
+                defaultMessageEl.style.opacity = "0";
+
+                // Once faded out, hide the default message and reveal the padlock.
+                setTimeout(function ()
+                {
+                    defaultMessageEl.style.display = "none";
+                    // Initialize padlock starting position:
+                    pPosX = Math.random() * (container.clientWidth - 100);
+                    pPosY = Math.random() * (container.clientHeight - 100);
+                    padlockEl.style.left = pPosX + "px";
+                    padlockEl.style.top = pPosY + "px";
+                    // Initialize padlock velocity (2x slower movement).
+                    pVx = ((Math.random() * 2 + 1) * (Math.random() < 0.5 ? 1 : -1)) * 0.5;
+                    pVy = ((Math.random() * 2 + 1) * (Math.random() < 0.5 ? 1 : -1)) * 0.5;
+
+                    // Fade in the padlock over 1 second.
+                    padlockEl.style.transition = "opacity 1s";
+                    padlockEl.style.opacity = "1";
+
+                    // Optionally adjust the padlock image opacity (e.g., to 0.25 for 75% transparency).
+                    const padlockImg = padlockEl.querySelector("img");
+                    setTimeout(function ()
+                    {
+                        padlockImg.style.transition = "opacity 1s";
+                        padlockImg.style.opacity = "0.25";
+                    }, 50);
+
+                    // Start the padlock bounce animation.
+                    requestAnimationFrame(animatePadlock);
+                }, 1000);
+            }, 5000);
         });
     </script>
 </body>

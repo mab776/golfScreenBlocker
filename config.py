@@ -1,8 +1,10 @@
 """
 This module loads the configuration settings for the ScreenBlocker application.
 The configuration file is expected to be located one directory level above the
-directory of this script. The file should be named 'screenBlockerConfig.cfg' and
+directory of this script.
+The file should be named 'screenBlockerConfig.cfg' and
 should be based on the 'screenBlockerConfig_template.cfg' file.
+location: "../screenBlockerConfig.cfg"
 """
 
 import os
@@ -11,10 +13,12 @@ from dataclasses import dataclass
 
 CONFIG_FILE = "screenBlockerConfig.cfg"
 
+# configuration file [google] section and tags
 GOOGLE_SECTION = "google"
 API_KEY_TAG = "key"
 CALENDAR_ID_TAG = "calendar_id"
 
+# configuration file [chrome] section and tags
 CHROME_SECTION = "chrome"
 CHROME_PATH_TAG = "path"
 HTML_FILE_TAG = "html_file"
@@ -28,7 +32,6 @@ class Config:
     apiKey: str = ""
     calendarId: str = ""
     chromePath: str = "C:/Program Files/Google/Chrome/Application/chrome.exe"
-    htmlFile: str = "display.html"
 
 
 def load_config() -> Config:
@@ -63,9 +66,6 @@ def load_config() -> Config:
         if configParsed.has_option(CHROME_SECTION, CHROME_PATH_TAG):
             cfg.chromePath = configParsed.get(CHROME_SECTION, CHROME_PATH_TAG)
 
-        if configParsed.has_option(CHROME_SECTION, HTML_FILE_TAG):
-            cfg.htmlFile = configParsed.get(CHROME_SECTION, HTML_FILE_TAG)
-
     return cfg
 
 
@@ -75,4 +75,3 @@ if __name__ == "__main__":
     print("Google Key:", cfg.apiKey)
     print("Calendar ID:", cfg.calendarId)
     print("Chrome Path:", cfg.chromePath)
-    print("HTML File:", cfg.htmlFile)

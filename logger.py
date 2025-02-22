@@ -1,15 +1,13 @@
-from io import TextIOWrapper
 import os
-from pathlib import Path
 import sys
 import traceback
-from datetime import datetime, timezone
+from pathlib import Path
+from io import TextIOWrapper
+from datetime import datetime, timezone, timedelta
 from typing import Any, Optional, TextIO, Tuple, Type, Union
 
-# logger object to write console into console and file
-# it will also create a new file for every day
-
 LOG_FOLDER = Path('logs')
+KEEP_LOGS_FOR_DAYS = 30
 
 if not LOG_FOLDER.exists():
     os.makedirs(LOG_FOLDER)
@@ -25,11 +23,26 @@ def touchFile(path: Union[str, Path]) -> None:
         path.touch()
 
 
+def purge_old_logs() -> None:
+    '''
+    Delete log files older than KEEP_LOGS_FOR_DAYS based on the date extracted from the file name.
+    Expected file name format: YYYY-MM-DD.log
+    '''
+    cutoff_date = datetime.now(tz=timezone.utc) - timedelta(days=KEEP_LOGS_FOR_DAYS)
+    for logfile in LOG_FOLDER.glob("*.log"):
+        try:
+            file_date = datetime.strptime(logfile.stem, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            if file_date < cutoff_date:
+                logfile.unlink()
+        except Exception as e:
+            sys.stderr.write(f"Failed to parse or delete {logfile}: {e}\n")
+
+
 class Logger(object):
     # singleton, this class cannot exist twice
     __shared_state: dict = {}
 
-    def __init__(self, doFileLogging: bool = True):
+    def __init__(self, moduleName: str, doFileLogging: bool = True):
         # singleton
         self.__dict__ = self.__shared_state
 
@@ -38,23 +51,28 @@ class Logger(object):
         self.now: datetime = datetime.now(tz=timezone.utc)
         self.fileName: str = self.now.strftime(self.formatFile)
         self.file: Path = LOG_FOLDER / self.fileName
+        self.moduleName: str = moduleName
         # save then override terminal
         self.terminal: TextIO = sys.stdout
         sys.stdout = self
 
         self.log: Optional[TextIOWrapper] = None
         if self.doFileLogging:
+            # Purge logs older than 30 days before creating/opening today's log file.
+            purge_old_logs()
             touchFile(self.file)
             self.log = open(self.file, "a")
 
         # Set the global exception handler
         sys.excepthook = self.globalExceptionHandler
 
+        bootLogo: str = f"*          {self.moduleName} BOOT          *"
+
         print()
         print()
-        print("*****************************************")
-        print("*          SCREEN BLOCKER BOOT          *")
-        print("*****************************************")
+        print("*" * len(bootLogo))
+        print(bootLogo)
+        print("*" * len(bootLogo))
         print()
         print()
 
@@ -103,6 +121,8 @@ class Logger(object):
                 self.log.close()
             self.file = LOG_FOLDER / self.fileName
             if self.doFileLogging:
+                # Purge logs older than 30 days before creating/opening today's log file.
+                purge_old_logs()
                 touchFile(self.file)
                 self.log = open(self.file, "a")
 

@@ -4,9 +4,11 @@ launches a Chrome browser in kiosk mode if no event is active.
 
 Scenario:
 
-This is for a golf simulator business. The simulator is booked in 15min slots.
+This is for a golf simulator. The simulator is booked in 15min slots.
 The screen blocker is a webpage that displays a message when the event ends or when there is no event
 active in the Google Calendar. The message is displayed in a Chrome browser kiosk fullscreen mode.
+
+TODO message will need to pop on dual screen
 
 Client needs:
 
@@ -25,26 +27,29 @@ Client needs:
   (the message will be french and english)
 - at boot, if no event in the next 5min, we display the screen blocker.
   with the default message.
-
 """
 
-from enum import Enum
 import sys
 import time
 import psutil
 import subprocess
+from enum import Enum
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional, Tuple
-from googleapiclient.discovery import build, Resource
+from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from typings_google_calendar_api.events import Event
 from config import Config, load_config
+from logger import Logger
 
 
 class MessageType(Enum):
     TIMEUP = "timeup"
     BACK_TO_BACK = "backtoback"
 
+
+# Initialize the logger
+Logger("SCREEN BLOCKER", True)
 
 # Load configuration settings for Google Calendar and Chrome
 try:
