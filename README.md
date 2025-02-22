@@ -46,7 +46,7 @@ You can find your calendar ID in the Google Calendar web interface by following 
 ## Use case
 
 This is for a golf simulator. The simulator is booked in 15min+ slots.
-The screen blocker is a webpage that displays a message when the event ends or when there is no event active in the Google Calendar. The message is displayed in a Chrome browser kiosk fullscreen mode.
+The screen blocker is a webpage that displays a message when the event ends or when there is no event active in the Google Calendar. The message is displayed in a Chrome browser in kiosk mode.
 
 ## Actions
 

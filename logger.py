@@ -3,7 +3,7 @@ import sys
 import traceback
 from pathlib import Path
 from io import TextIOWrapper
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 from typing import Any, Optional, TextIO, Tuple, Type, Union
 
 LOG_FOLDER = Path('logs')
@@ -15,7 +15,7 @@ if not LOG_FOLDER.exists():
 
 def touchFile(path: Union[str, Path]) -> None:
     '''
-    create an empty file if it doesn't exist
+    Create an empty file if it doesn't exist.
     '''
     path = Path(path)
     if not path.exists():
@@ -30,7 +30,7 @@ def purge_old_logs() -> None:
     cutoff_date = datetime.now() - timedelta(days=KEEP_LOGS_FOR_DAYS)
     for logfile in LOG_FOLDER.glob("*.log"):
         try:
-            file_date = datetime.strptime(logfile.stem, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            file_date = datetime.strptime(logfile.stem, "%Y-%m-%d")
             if file_date < cutoff_date:
                 logfile.unlink()
         except Exception as e:
@@ -52,7 +52,7 @@ class Logger(object):
         self.file: Path = LOG_FOLDER / self.fileName
         self.moduleName: str = moduleName
         # save then override terminal
-        self.terminal: TextIO = sys.stdout
+        self.terminal: TextIO = sys.__stdout__
         sys.stdout = self
 
         self.log: Optional[TextIOWrapper] = None
@@ -80,7 +80,7 @@ class Logger(object):
             return
 
         self.compareFileName()
-        # if the only argument is a newline, don't print the time
+        # If the only argument is a newline, don't print the time.
         if len(args) == 1 and args[0] == '\n':
             time: str = ''
         else:
@@ -89,7 +89,7 @@ class Logger(object):
         for arg in args:
             messageStr += str(arg)
 
-        # hack for progress bars
+        # Hack for progress bars.
         index: int = messageStr[:20].find('[')
         if index >= 0 and len(messageStr) > index+2 and messageStr[index+1] in {".", ">", "="}:
             messageStr = '\r' + messageStr[1:]
@@ -132,7 +132,7 @@ class Logger(object):
         self.terminal.flush()
 
     def globalExceptionHandler(self, exc_type: Type[BaseException], exc_value: BaseException, exc_traceback: Any) -> None:
-        # Print the exception type, value, and traceback
+        # Print the exception type, value, and traceback.
         traces: list[str] = traceback.format_tb(exc_traceback)
         traceTuple: Tuple[str, ...] = ()
         for trace in traces:

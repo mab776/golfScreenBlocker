@@ -2,35 +2,17 @@
 This script is a daemon that checks a Google Calendar for active events and
 launches a Chrome browser in kiosk mode if no event is active.
 
-Scenario:
-
-This is for a golf simulator. The simulator is booked in 15min slots.
-The screen blocker is a webpage that displays a message when the event ends or when there is no event
-active in the Google Calendar. The message is displayed in a Chrome browser kiosk fullscreen mode.
-
-TODO test message will need to pop on dual screen
+TODO test DUAL_SCREEN = True
 TODO back-to-back not working
-TODO full review of the code
-TODO logger UTC instead of local time
 
-Client needs:
-
-- 5min before an event start, we remove the screen blocker.
-- At the exact time of the event end, if there is no other event after,
-  we put the screen blocker with this message (default message):
-    "all good things come to an end, your time is up.
-     If you would like to extend, please add time to your booking via the le birdie app.
-     Thanks for playing!"
-  (the message will be french and english)
-- If there is another event (back-to-back booking) immediately following,
-  at the exact time of the event end,
-  we display the screen blocker for 20 seconds with this message (backtoback message):
-    "all good things come to an end, the next booking is ready to begin.
-     Have a great day!"
-  (the message will be french and english)
-- at boot, if no event in the next 5min, we display the screen blocker.
-  with the default message.
 """
+
+import os
+import sys
+import time
+import psutil
+import subprocess
+from enum import Enum
 from google.oauth2 import service_account
 from config import Config, load_config
 from typings_google_calendar_api.events import Event
@@ -38,12 +20,6 @@ from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 from typing import Any, Optional, Tuple
 from datetime import datetime, timedelta, timezone
-from enum import Enum
-import subprocess
-import psutil
-import time
-import sys
-import os
 
 from logger import Logger
 Logger("SCREEN BLOCKER", True)
@@ -66,12 +42,12 @@ except Exception as e:
     sys.exit(1)
 
 
-def getCalendarService() -> Any:
+def getCalendarService() -> Any:  # google build is impossible to type
     """Try to build and return the Google Calendar API service using service account credentials.
     Retries every 30 seconds if connection fails."""
     while True:
         try:
-            # Load credentials from the JSON file (cfg.serviceAccountJsonPath now holds the JSON file path)
+            # Load credentials from the JSON file
             credentials = service_account.Credentials.from_service_account_file(cfg.serviceAccountJsonPath, scopes=SCOPES)
             serviceInstance = build("calendar", "v3", credentials=credentials)
             print("Google Calendar service initialized successfully.")
@@ -106,9 +82,10 @@ def getEvents() -> Tuple[Optional[Event], Optional[Event], Optional[Event]]:
     """
     Returns a tuple: (currentEvent, lastEvent, nextEvent) by checking only a narrow time window.
     """
-    now = datetime.now(timezone.utc)
-    timeMin = now - timedelta(minutes=5)
-    timeMax = now + timedelta(minutes=5)
+    now: datetime = datetime.now(timezone.utc)
+    timeMin: datetime = now - timedelta(minutes=10)
+    timeMax: datetime = now + timedelta(minutes=10)
+
     try:
         events: list[Event] = calendarService.events().list(
             calendarId=cfg.calendarId,
@@ -124,24 +101,23 @@ def getEvents() -> Tuple[Optional[Event], Optional[Event], Optional[Event]]:
         print("Error fetching events:", e)
         return None, None, None
 
-    currentEvent = None
-    nextEvent = None
-    lastEvent = None
+    currentEvent: Optional[Event] = None
+    nextEvent: Optional[Event] = None
+    lastEvent: Optional[Event] = None
 
     for event in events:
         startStr: str = event["start"].get("dateTime", event["start"].get("date"))
         endStr: str = event["end"].get("dateTime", event["end"].get("date"))
         startTime: datetime = datetime.fromisoformat(startStr)
         endTime: datetime = datetime.fromisoformat(endStr)
-        if startTime <= now < endTime:
-            currentEvent = event
-        elif startTime > now and nextEvent is None:
-            nextEvent = event
-        elif endTime <= now:
-            # Pick the event that ended most recently
-            if (lastEvent is None or
-                    datetime.fromisoformat(lastEvent["end"].get("dateTime", lastEvent["end"].get("date"))) < endTime):
-                lastEvent = event
+
+        if endTime <= now:
+            lastEvent = event
+        else:
+            if startTime <= now:
+                currentEvent = event
+            elif nextEvent is None:
+                nextEvent = event
 
     return currentEvent, lastEvent, nextEvent
 
@@ -160,7 +136,7 @@ def killChrome() -> None:
         print("Error killing Chrome processes:", e)
 
 
-def startChrome(msgType: MessageType = MessageType.timesUp) -> None:
+def startChrome(msgType: MessageType) -> None:
     """
     Start Chrome in kiosk mode. If DUAL_SCREEN is True, launch two instances
     with different window-position flags; otherwise, launch one.
@@ -174,7 +150,8 @@ def startChrome(msgType: MessageType = MessageType.timesUp) -> None:
         print("Error checking Chrome processes:", e)
 
     print(f"Starting Chrome in kiosk mode. Message type: {msgType.value}")
-    # url = current path + display.html?msg= + msgType
+
+    # start chrome with "display.html" of this repo
     currentPath = os.path.dirname(os.path.realpath(__file__))
     url = f"file:///{currentPath}/display.html?msg={msgType.value}"
 
@@ -194,15 +171,43 @@ def startChrome(msgType: MessageType = MessageType.timesUp) -> None:
 
 def main() -> None:
     boot = True
+    eventLogged = False
     while True:
         try:
             now = datetime.now(timezone.utc)
             currentEvent, lastEvent, nextEvent = getEvents()
 
             if currentEvent is not None:
-                print("Event active now:", currentEvent["summary"])
+                boot = False
+                if not eventLogged:
+                    print(f"Event active now (time is UTC): {currentEvent['summary']}")
+                    eventLogged = True
                 killChrome()
+
+                currentEnd = datetime.fromisoformat(
+                    currentEvent["end"].get("dateTime", currentEvent["end"].get("date"))
+                )
+
+                # if current event ends within the next 20 seconds
+                if (currentEnd - now).total_seconds() < 20:
+                    # check for back-to-back events
+                    if nextEvent is not None:
+                        nextStart = datetime.fromisoformat(
+                            nextEvent["start"].get("dateTime", nextEvent["start"].get("date"))
+                        )
+                        if (nextStart - currentEnd).total_seconds() < 30:
+                            print("Back-to-back events detected. Starting blocker.")
+                            startChrome(msgType=MessageType.backToback)
+                            time.sleep(20)
+                            killChrome()
+                            time.sleep(5*60)  # wait 5 minutes before checking again
+                    else:
+                        print("Event finished. Starting blocker.")
+                        startChrome(msgType=MessageType.timesUp)
+                        # wait 30sec before checking again
+                        time.sleep(30)
             else:
+                eventLogged = False
                 if boot:
                     print("Boot sequence: no event active.")
                     startChrome(msgType=MessageType.boot)
@@ -210,31 +215,18 @@ def main() -> None:
                 else:
                     # If a future event is within 5 minutes, disable the blocker.
                     if nextEvent is not None:
-                        nextStart = datetime.fromisoformat(
-                            nextEvent["start"].get("dateTime", nextEvent["start"].get("date"))
+                        nextStart = datetime.fromisoformat(nextEvent["start"].get(
+                            "dateTime", nextEvent["start"].get("date"))
                         )
                         secondsToNext = (nextStart - now).total_seconds()
                         if secondsToNext <= 5 * 60:
+                            print(f"Next event within 5 minutes. Disabling blocker.  {nextEvent['summary']}")
                             killChrome()
-                            time.sleep(5 * 60)
-                            continue  # Skip starting Chrome if a booking is imminent.
+                            # Wait 6 minutes before checking again
+                            # to make sure the event will be active
+                            time.sleep(6 * 60)
+                            continue
 
-                    # Determine the appropriate message.
-                    msgType = MessageType.timesUp
-                    if lastEvent is not None and nextEvent is not None:
-                        lastEnd = datetime.fromisoformat(
-                            lastEvent["end"].get("dateTime", lastEvent["end"].get("date"))
-                        )
-                        nextStart = datetime.fromisoformat(
-                            nextEvent["start"].get("dateTime", nextEvent["start"].get("date"))
-                        )
-                        # Trigger back-to-back mode if the gap is very small (e.g. <30 sec)
-                        if (nextStart - lastEnd).total_seconds() < 30:
-                            msgType = MessageType.backToback
-                            startChrome(msgType)
-                            time.sleep(20)
-                            continue  # will kill the browser
-                    startChrome(msgType)
         except Exception as e:
             print("Error in main loop:", e)
         finally:
