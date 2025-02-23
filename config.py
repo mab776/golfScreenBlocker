@@ -23,6 +23,11 @@ CALENDAR_ID_TAG = "calendar_id"
 CHROME_SECTION = "chrome"
 CHROME_PATH_TAG = "path"
 
+# Configuration file [system] section and tags
+SYSTEM_SECTION = "system"
+DUAL_SCREEN_TAG = "dual_screen"
+VERBOSE_TAG = "verbose"
+
 
 @dataclass
 class Config:
@@ -32,6 +37,8 @@ class Config:
     serviceAccountJsonPath: str = ""
     calendarId: str = ""
     chromePath: str = "C:/Program Files/Google/Chrome/Application/chrome.exe"
+    dualScreen: bool = False
+    verbose: bool = False
 
 
 def load_config() -> Config:
@@ -65,15 +72,32 @@ def load_config() -> Config:
         if configParsed.has_option(CHROME_SECTION, CHROME_PATH_TAG):
             cfg.chromePath = configParsed.get(CHROME_SECTION, CHROME_PATH_TAG)
 
+    # Optional values for the system settings
+    if configParsed.has_section(SYSTEM_SECTION):
+        if configParsed.has_option(SYSTEM_SECTION, DUAL_SCREEN_TAG):
+            cfg.dualScreen = configParsed.getboolean(SYSTEM_SECTION, DUAL_SCREEN_TAG)
+        if configParsed.has_option(SYSTEM_SECTION, VERBOSE_TAG):
+            cfg.verbose = configParsed.getboolean(SYSTEM_SECTION, VERBOSE_TAG)
+
     return cfg
+
+
+def printConfig(cfg: Config):
+    """
+    Print the configuration values to the console.
+    """
+    print("Configuration Values:")
+    print(f"Google Key:  {cfg.serviceAccountJsonPath}")
+    print(f"Calendar ID: {cfg.calendarId}")
+    print(f"Chrome Path: {cfg.chromePath}")
+    print(f"Dual Screen: {cfg.dualScreen}")
+    print(f"Verbose:     {cfg.verbose}")
+    print()
 
 
 # test the module
 if __name__ == "__main__":
     cfg = load_config()
-    print(f"Google Key:  {cfg.serviceAccountJsonPath}")
-    print(f"Calendar ID: {cfg.calendarId}")
-    print(f"Chrome Path: {cfg.chromePath}")
-    print()
+    printConfig(cfg)
     print("Configuration loaded successfully.")
     print()

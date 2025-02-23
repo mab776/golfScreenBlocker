@@ -41,6 +41,7 @@
             const fadeContainer = document.getElementById("fadeContainer");
             const defaultMessageElement = document.getElementById("defaultMessage");
             const padlockElement = document.getElementById("padlock");
+            const topPadlockElement = document.getElementById("topPadlock");
             const container = document.querySelector(".container");
 
             // Function to initialize and animate the padlock (for the moving element)
@@ -59,7 +60,7 @@
                 const padlockImg = padlockElement.querySelector("img");
 
                 // Fixed random velocity using a single Math.random call per axis
-                let speedFactor = 0.4;
+                let speedFactor = 0.6;
                 // Initialize velocity for bounce animation
                 let padlockVelocityX = ((Math.random() * 2 + 1) * (Math.random() < 0.5 ? 1 : -1)) * speedFactor;
                 let padlockVelocityY = ((Math.random() * 2 + 1) * (Math.random() < 0.5 ? 1 : -1)) * speedFactor;
@@ -130,9 +131,14 @@
                 fadeContainer.classList.add("visible");
             }, 1000);
 
-            // For non-"backtoback" messages: fade-out the container after 20s, then reveal the padlock.
-            if (msg !== "backtoback")
+            if (msg == "backtoback")
             {
+                // hide top padlock for backtoback
+                topPadlockElement.style.display = "none";
+            }
+            else
+            {
+                // For non-"backtoback" messages: fade-out the container after 20s, then reveal the padlock.
                 setTimeout(() =>
                 {
                     fadeContainer.style.transition = "opacity 1s";
