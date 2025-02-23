@@ -2,6 +2,8 @@
 daemon that checks a Google Calendar for active events and launches a Chrome browser in kiosk mode if no event is active to lock the screen. The daemon will remove the screen-lock 5 minutes before an event starts and will lock the screen again when the event ends.
 
 ## Installation Windows
+- Set the windows taskbar to auto-hide
+- Install Python 3.12+
 - Clone the repository
     - `git clone https://github.com/mab776/golfScreenBlocker.git`
 - create a virtual environment

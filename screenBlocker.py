@@ -3,7 +3,7 @@ This script is a daemon that checks a Google Calendar for active events and
 launches a Chrome browser in kiosk mode if no event is active.
 
 TODO test cfg.dualScreen = True
-TODO make sure chrome is always on top
+TODO a lot of calendar testing
 
 """
 
@@ -20,6 +20,7 @@ from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 from typing import Any, Optional, Tuple
 from datetime import datetime, timedelta, timezone
+from win32 import ensureWindowOnTop
 
 from logger import Logger
 Logger("SCREEN BLOCKER", True)
@@ -57,7 +58,7 @@ def getCalendarService() -> Any:  # google build is impossible to type
             print("Google Calendar service initialized successfully.")
             return serviceInstance
         except Exception as e:
-            print("Error initializing Google Calendar service:", e)
+            print(f"Error initializing Google Calendar service: {e}")
             print("Retrying in 30 seconds...")
             time.sleep(30)
 
@@ -99,10 +100,10 @@ def getEvents() -> Tuple[Optional[Event], Optional[Event]]:
             orderBy="startTime"
         ).execute().get("items", [])
     except HttpError as he:
-        print("HTTP error during Calendar API call:", he)
+        print(f"HTTP error during Calendar API call: {he}")
         return None, None
     except Exception as e:
-        print("Error fetching events:", e)
+        print(f"Error fetching events: {e}")
         return None, None
 
     currentEvent: Optional[Event] = None
@@ -148,7 +149,7 @@ def killChrome() -> None:
                     print("Chrome processes found. Terminating...")
                     alreadyLogged = True
     except Exception as e:
-        print("Error killing Chrome processes:", e)
+        print(f"Error killing Chrome processes: {e}")
 
 
 def startChrome(msgType: MessageType) -> None:
@@ -166,9 +167,9 @@ def startChrome(msgType: MessageType) -> None:
             if "chrome" in process.info["name"].lower():
                 return
     except Exception as e:
-        print("Error checking Chrome processes:", e)
+        print(f"Error checking Chrome processes: {e}")
 
-    print(f"Starting Chrome in kiosk mode. Message type: {msgType.value}, dual screen: {cfg.dualScreen}")
+    print(f"Starting Chrome in kiosk mode. Message type: {msgType.value} | dual screen: {cfg.dualScreen}")
 
     # start chrome with "display.html" of this repo
     currentPath = os.path.dirname(os.path.realpath(__file__))
@@ -183,12 +184,14 @@ def startChrome(msgType: MessageType) -> None:
             subprocess.Popen(kioskCommand + ["--window-position=0,0", url])
             subprocess.Popen(kioskCommand + ["--window-position=1920,0", url])
         except Exception as e:
-            print("Error starting dual-screen Chrome:", e)
+            print(f"Error starting dual-screen Chrome: {e}")
     else:
         try:
             subprocess.Popen(kioskCommand + [url])
         except Exception as e:
-            print("Error starting Chrome:", e)
+            print(f"Error starting Chrome: {e}")
+    time.sleep(1)
+    ensureWindowOnTop("Chrome", cfg.verbose)
 
 
 def main() -> None:
@@ -298,8 +301,9 @@ def main() -> None:
                     startChrome(msgType=MessageType.boot)
 
         except Exception as e:
-            print("Error in main loop:", e)
+            print(f"Error in main loop: {e}")
         finally:
+            ensureWindowOnTop("Chrome", cfg.verbose)
             time.sleep(20)
 
 
