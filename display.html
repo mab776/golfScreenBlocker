@@ -59,11 +59,10 @@
                 const padlockImg = padlockElement.querySelector("img");
 
                 // Fixed random velocity using a single Math.random call per axis
-                let speedFactor = 1.2;
-                let rX = Math.random();
-                let padlockVelocityX = ((rX + 1) * (rX < 0.5 ? 1 : -1)) * speedFactor;
-                let rY = Math.random();
-                let padlockVelocityY = ((rY + 1) * (rY < 0.5 ? 1 : -1)) * speedFactor;
+                let speedFactor = 0.4;
+                // Initialize velocity for bounce animation
+                let padlockVelocityX = ((Math.random() * 2 + 1) * (Math.random() < 0.5 ? 1 : -1)) * speedFactor;
+                let padlockVelocityY = ((Math.random() * 2 + 1) * (Math.random() < 0.5 ? 1 : -1)) * speedFactor;
 
                 const animatePadlock = () =>
                 {
