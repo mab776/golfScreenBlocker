@@ -105,7 +105,7 @@ def startChrome(cfg: Config, msgType: MessageType) -> None:
         except Exception as e:
             print(f"Error starting Chrome: {e}")
 
-    time.sleep(1)
+    time.sleep(5)
     ensureWindowOnTop(cfg.chromeWindowName, cfg.verbose)
 
 

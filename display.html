@@ -32,6 +32,26 @@
         </div>
     </div>
     <script>
+
+        // This block prevents most user interaction events from reaching any callbacks.
+        (function ()
+        {
+            const events = [
+                'click', 'dblclick', 'mousedown', 'mouseup', 'mousemove',
+                'touchstart', 'touchmove', 'touchend', 'keydown', 'keypress', 'keyup',
+                'contextmenu'
+            ];
+            events.forEach(eventName =>
+            {
+                document.addEventListener(eventName, e =>
+                {
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    e.preventDefault();
+                }, true); // useCapture=true to catch events first
+            });
+        })();
+
         // Helper to get URL query parameters.
         const getQueryParam = param => new URLSearchParams(window.location.search).get(param);
 
