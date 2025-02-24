@@ -61,7 +61,6 @@ def killChrome(cfg: Config) -> None:
 def startChrome(cfg: Config, msgType: MessageType) -> None:
     """
     Start Chrome in kiosk mode. If cfg.dualScreen is True, launch two instances
-    with different window-position flags and reposition them programmatically;
     otherwise, launch one.
     """
     if cfg.verbose:
@@ -76,6 +75,7 @@ def startChrome(cfg: Config, msgType: MessageType) -> None:
         print(f"Error checking Chrome processes: {e}")
 
     print(f"Starting Chrome in kiosk mode. Message type: {msgType.value} | dual screen: {cfg.dualScreen}")
+
     currentPath = os.path.dirname(os.path.realpath(__file__))
     url = f"file:///{currentPath}/display.html?msg={msgType.value}"
     if cfg.verbose:
@@ -83,15 +83,25 @@ def startChrome(cfg: Config, msgType: MessageType) -> None:
 
     if cfg.dualScreen:
         try:
-            subprocess.Popen([cfg.chromePath] + kioskCommand +
-                             ["--window-position=9999,0", f"--user-data-dir={chromeProfile1}", url])
-            subprocess.Popen([cfg.chromePath] + kioskCommand +
-                             ["--window-position=0,0", f"--user-data-dir={chromeProfile2}", url])
+            subprocess.Popen(
+                [cfg.chromePath] +
+                kioskCommand +
+                ["--window-position=9999,0", f"--user-data-dir={chromeProfile1}", url]
+            )
+            subprocess.Popen(
+                [cfg.chromePath] +
+                kioskCommand +
+                ["--window-position=0,0", f"--user-data-dir={chromeProfile2}", url]
+            )
         except Exception as e:
             print(f"Error starting dual-screen Chrome: {e}")
     else:
         try:
-            subprocess.Popen([cfg.chromePath] + kioskCommand + [f"--user-data-dir={chromeProfile1}", url])
+            subprocess.Popen(
+                [cfg.chromePath] +
+                kioskCommand +
+                [f"--user-data-dir={chromeProfile1}", url]
+            )
         except Exception as e:
             print(f"Error starting Chrome: {e}")
 
@@ -113,6 +123,7 @@ def createChromeUserProfiles() -> None:
     os.makedirs(chromeProfile2, exist_ok=True)
 
 
+# test module
 if __name__ == "__main__":
     from config import loadConfig
     cfg: Config = loadConfig()

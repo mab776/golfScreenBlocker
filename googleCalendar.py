@@ -78,6 +78,7 @@ def getEvents(cfg: Config, calendarService: Any) -> Tuple[Optional[Event], Optio
     return currentEvent, nextEvent
 
 
+# test module
 if __name__ == "__main__":
     from config import loadConfig
     cfg = loadConfig()

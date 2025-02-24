@@ -101,6 +101,7 @@ def ensureWindowOnTop(substring: str, verbose: bool = False) -> None:
         print(f"Unable to set Chrome on top: {e}")
 
 
+# test module
 if __name__ == '__main__':
     # List all visible windows.
     listWindows()

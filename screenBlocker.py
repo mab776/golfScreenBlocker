@@ -1,9 +1,6 @@
 """
 This script is a daemon that checks a Google Calendar for active events and
 launches a Chrome browser in kiosk mode if no event is active.
-
-TODO a lot of calendar testing
-
 """
 
 import sys
@@ -61,7 +58,7 @@ def main() -> None:
             if currentEvent is not None:
 
                 if (cfg.verbose):
-                    print("Current event exsit")
+                    print("Current event exists")
 
                 boot = False
                 if not eventLogged:

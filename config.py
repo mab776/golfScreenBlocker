@@ -100,7 +100,7 @@ def printConfig(cfg: Config):
     print()
 
 
-# test the module
+# test module
 if __name__ == "__main__":
     cfg = loadConfig()
     printConfig(cfg)
