@@ -3,6 +3,7 @@ daemon that checks a Google Calendar for active events and launches a Chrome bro
 
 ## Installation Windows
 - Set the windows taskbar to auto-hide
+- Make sure the 2nd screen is set to extend and is at the right of the main screen, negative coordinates for 2nd screen are not supported
 - Install Python 3.12+
 - Clone the repository
     - `git clone https://github.com/mab776/golfScreenBlocker.git`

@@ -22,6 +22,7 @@ CALENDAR_ID_TAG = "calendar_id"
 # configuration file [chrome] section and tags
 CHROME_SECTION = "chrome"
 CHROME_PATH_TAG = "path"
+WINDOW_NAME_TAG = "window_name"
 
 # Configuration file [system] section and tags
 SYSTEM_SECTION = "system"
@@ -39,9 +40,10 @@ class Config:
     chromePath: str = "C:/Program Files/Google/Chrome/Application/chrome.exe"
     dualScreen: bool = False
     verbose: bool = False
+    chromeWindowName: str = "Google Chrome"
 
 
-def load_config() -> Config:
+def loadConfig() -> Config:
     """
     Load configuration values from the TOML (.cfg) file located beside
     the repository folder for this project.
@@ -71,6 +73,8 @@ def load_config() -> Config:
     if configParsed.has_section(CHROME_SECTION):
         if configParsed.has_option(CHROME_SECTION, CHROME_PATH_TAG):
             cfg.chromePath = configParsed.get(CHROME_SECTION, CHROME_PATH_TAG)
+        if configParsed.has_option(CHROME_SECTION, WINDOW_NAME_TAG):
+            cfg.chromeWindowName = configParsed.get(CHROME_SECTION, WINDOW_NAME_TAG)
 
     # Optional values for the system settings
     if configParsed.has_section(SYSTEM_SECTION):
@@ -90,6 +94,7 @@ def printConfig(cfg: Config):
     print(f"Google Key:  {cfg.serviceAccountJsonPath}")
     print(f"Calendar ID: {cfg.calendarId}")
     print(f"Chrome Path: {cfg.chromePath}")
+    print(f"Window Name: {cfg.chromeWindowName}")
     print(f"Dual Screen: {cfg.dualScreen}")
     print(f"Verbose:     {cfg.verbose}")
     print()
@@ -97,7 +102,7 @@ def printConfig(cfg: Config):
 
 # test the module
 if __name__ == "__main__":
-    cfg = load_config()
+    cfg = loadConfig()
     printConfig(cfg)
     print("Configuration loaded successfully.")
     print()
